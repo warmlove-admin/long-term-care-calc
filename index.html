@@ -176,13 +176,13 @@ th { background: #f5f5f5; color: #555; font-weight: bold; }
 .highlight-cell { color: #D32F2F; font-weight: bold; }
 .subtotal-row { background: #FFFDE7; font-weight: bold; }
 
-/* 🌟 截圖高對比模式 (放大字體) */
+/* 🌟 截圖高對比模式 (放大字體 - 再加大) */
 .high-contrast-mode {
   background: #fff !important;
-  padding: 20px !important; /* 增加留白 */
+  padding: 20px !important; 
   margin: 0 !important;
   border: none !important;
-  width: 600px !important; /* 強制寬度，確保截圖不變形 */
+  width: 700px !important; /* 稍微加寬以容納並排文字 */
   box-sizing: border-box;
 }
 .high-contrast-mode .table-wrapper {
@@ -190,26 +190,32 @@ th { background: #f5f5f5; color: #555; font-weight: bold; }
   border: 2px solid #000 !important;
   margin-bottom: 20px !important;
 }
+/* 字體加大設定 */
 .high-contrast-mode table {
-  font-size: 18px !important; /* 字體放大 */
+  font-size: 22px !important; /* 一般儲存格文字加大 */
 }
 .high-contrast-mode th, .high-contrast-mode td {
   border: 1px solid #000 !important;
   color: #000 !important;
-  padding: 12px !important;
+  padding: 14px !important; /* 增加內距讓文字呼吸 */
 }
 .high-contrast-mode .title-cell {
   background: #eee !important;
   color: #000 !important;
   border-bottom: 2px solid #000 !important;
-  font-size: 20px !important;
+  font-size: 24px !important; /* 標題儲存格加大 */
 }
-.high-contrast-mode .highlight-cell { color: #000 !important; text-decoration: underline; }
+.high-contrast-mode .highlight-cell { 
+  color: #000 !important; 
+  text-decoration: underline;
+  font-weight: 900 !important;
+}
 .high-contrast-mode .total-amount-box { 
     border: 3px solid #000 !important; 
     background: #fff !important; 
     color: #000 !important;
-    font-size: 24px !important; /* 總金額特大 */
+    font-size: 32px !important; /* 總金額特大 */
+    padding: 30px !important;
 }
 
 /* ================= 操作按鈕 ================= */
@@ -482,16 +488,7 @@ button.action-btn {
 </div>
 
 <script>
-/* ... (邏輯部分與之前完全相同，為節省篇幅僅列出修改部分) ... */
-/* 請注意：此處省略了與長照計算機24版完全相同的資料定義與計算邏輯。
-   為了確保程式碼完整，請您將第24版中的 `SERVICE_ITEMS` 到 `computeGA_SC` 的所有 JS 邏輯
-   複製貼上到這裡。
-   
-   以下僅列出針對「圖片截取」與「結果顯示」修改的關鍵函式。
-*/
-
-// --- 必須保留的完整邏輯 (請將 24 版的 JS 邏輯放回這裡，包含所有 const 定義和計算 function) ---
-// 為方便您複製，我直接在此提供完整的 JS 區塊
+/* ... (前段邏輯與 UI 控制維持不變) ... */
 const FLOW_NORMAL = ["step1", "step2-normal", "step2b-normal", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_FIRSTMONTH = ["step1", "step2-pre", "step2-post", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_NOT_FIRSTMONTH = ["step1", "step2-post", "step3-gasc", "step4", "step5"];
@@ -588,7 +585,8 @@ function applyBatchPre(){applyBatchCommon("batchPreList","preItems",["batchPreCo
 function applyBatchPost(){applyBatchCommon("batchPostList","postItems",["batchPostCount"],false)}
 
 function num(v){return isNaN(Number(v))?0:Number(v)}
-function calcRegularAmount(b){const d=num(b.querySelector(".unit-day")?.value);const w=num(b.querySelector(".unit-week")?.value);const m=num(b.querySelector(".unit-month")?.value);return d*w*m}
+/* 修正後：無條件進位總次數 */
+function calcRegularAmount(b){const d=num(b.querySelector(".unit-day")?.value);const w=num(b.querySelector(".unit-week")?.value);const m=num(b.querySelector(".unit-month")?.value);return Math.ceil(d*w*m)}
 function calcIrregularAmount(b){return num(b.querySelector(".unit-count")?.value)}
 function getUsage(c,m){const con=document.getElementById(c);if(!con)return{};const r={};con.querySelectorAll(".item-block").forEach(b=>{const amt=(m==="regular")?calcRegularAmount(b):calcIrregularAmount(b);if(amt>0)r[b.dataset.code]=amt});return r}
 function mergeUsage(...a){const r={};a.forEach(o=>{Object.keys(o).forEach(k=>{r[k]=(r[k]||0)+o[k]})});return r}
@@ -598,11 +596,103 @@ function sortP(u){return Object.keys(u).sort((a,b)=>SERVICE_ITEMS[a].price-SERVI
 
 function computeBC_Normal(cms,id,reg,irreg){const u=mergeUsage(reg,irreg);const t=getTotal(u);const lim=CMS_LIMIT[cms].BC;const over=Math.max(0,t-lim);if(over<=0)return{u,total:t,limit:lim,in:t,over:0,copay:getCopay(u,id),selfItems:{}};const s=sortP(u);let rem=over;const self={};const prot={...u};for(const k of s){if(rem<=0)break;const p=SERVICE_ITEMS[k].price;const q=prot[k];const c=p*q;if(c<=rem){self[k]=(self[k]||0)+q;prot[k]=0;rem-=c}else{const n=Math.ceil(rem/p);const r=Math.min(n,q);self[k]=(self[k]||0)+r;prot[k]-=r;rem-=r*p}}return{u,total:t,limit:lim,in:t-over,over,copay:getCopay(prot,id),selfItems:self}}
 function computeBC_Caregiver(cms,id,post){const u={...post};const raw=CMS_LIMIT[cms].BC;const lim=Math.ceil(raw*0.3);const t=getTotal(u);const over=Math.max(0,t-lim);if(over<=0)return{u,limit:lim,total:t,in:t,over:0,copay:getCopay(u,id),selfItems:{}};const s=sortP(u);let rem=over;const self={};const prot={...u};for(const k of s){if(rem<=0)break;const p=SERVICE_ITEMS[k].price;const q=prot[k];const c=p*q;if(c<=rem){self[k]=(self[k]||0)+q;prot[k]=0;rem-=c}else{const n=Math.ceil(rem/p);const r=Math.min(n,q);self[k]=(self[k]||0)+r;prot[k]-=r;rem-=r*p}}return{u,limit:lim,total:t,in:t-over,over,copay:getCopay(prot,id),selfItems:self}}
-function computeBC_Switch(cms,id,pre,post,preIn,day){const raw=CMS_LIMIT[cms].BC;const preF=Math.floor(raw*((day-1)/30));const postF=Math.floor(raw*0.3*((30-day+1)/30));const totalF=preF+postF;const preUsed=(preIn>0)?preIn:getTotal(pre);const postUsed=getTotal(post);const totalAll=preUsed+postUsed;
-if(preUsed>totalF){if(preUsed<=raw){const self={};Object.keys(post).forEach(k=>self[k]=post[k]);return{mode:"3",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed,limitBreakdown:`前段已用 ${preUsed}`,total:totalAll,in:preUsed,over:postUsed,copay:getCopay(pre,id),selfItems:self}}}else{const over=Math.max(0,preUsed+postUsed-raw);const u=mergeUsage(pre,post);const s=sortP(u);let rem=over;const self={};const prot={...u};for(const k of s){if(rem<=0)break;const p=SERVICE_ITEMS[k].price;const q=prot[k];if(!q)continue;const c=p*q;if(c<=rem){self[k]=q;prot[k]=0;rem-=c}else{const n=Math.ceil(rem/p);const r=Math.min(n,q);self[k]=r;prot[k]-=r;rem-=r*p}}return{mode:"4",preF,postF,totalF,preUsed,postUsed,bc:{limit:raw,limitBreakdown:`CMS原額度 ${raw}`,total:totalAll,in:totalAll-over,over,copay:getCopay(prot,id),selfItems:self}}}}
-if(preUsed>preF&&preUsed<=totalF){const remPost=totalF-preUsed;const overP=Math.max(0,postUsed-remPost);const s=sortP(post);let quota=remPost;const self={};const prot={};for(const k of s){const p=SERVICE_ITEMS[k].price;const q=post[k];const can=Math.floor(quota/p);const r=Math.min(can,q);if(r>0){prot[k]=r;quota-=r*p}const remQ=q-r;if(remQ>0)self[k]=remQ}return{mode:"2",preF,postF,totalF,preUsed,postUsed,bc:{limit:totalF,limitBreakdown:`前段公式 ${preF} + 後段公式 ${postF}`,total:totalAll,in:preUsed+(postUsed-overP),over:overP,copay:getCopay(pre,id)+getCopay(prot,id),selfItems:self}}}
-if(postUsed>postF){const overP=postUsed-postF;const s=sortP(post);let quota=postF;const self={};const prot={};for(const k of s){const p=SERVICE_ITEMS[k].price;const q=post[k];const can=Math.floor(quota/p);const r=Math.min(can,q);if(r>0){prot[k]=r;quota-=r*p}const remQ=q-r;if(remQ>0)self[k]=remQ}return{mode:"1-over",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed+postF,limitBreakdown:`前段已用 ${preUsed} + 後段公式 ${postF}`,total:totalAll,in:preUsed+postF,over:overP,copay:getCopay(pre,id)+getCopay(prot,id),selfItems:self}}}
-return{mode:"1",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed+postUsed,limitBreakdown:`前段已用 ${preUsed} + 後段已用 ${postUsed}`,total:totalAll,in:preUsed+postUsed,over:0,copay:getCopay(pre,id)+getCopay(post,id),selfItems:{}}}}
+
+function computeBC_Switch(cms,id,pre,post,preIn,day){
+  const raw=CMS_LIMIT[cms].BC;
+  const preF=Math.floor(raw*((day-1)/30));
+  const postF=Math.floor(raw*0.3*((30-day+1)/30));
+  const totalF=preF+postF;
+  
+  // 修正：計算 preUsed 和 preCopayVal (處理手動填寫金額的情況)
+  let preUsed, preCopayVal;
+  if (preIn > 0) {
+      preUsed = preIn;
+      const rates = { normal: 0.16, midlow: 0.05, low: 0.0 };
+      const r = rates[id] || 0;
+      preCopayVal = Math.round(preIn * r);
+  } else {
+      preUsed = getTotal(pre);
+      preCopayVal = getCopay(pre, id);
+  }
+
+  const postUsed=getTotal(post);
+  const totalAll=preUsed+postUsed;
+
+  // Case 3 & 4
+  if(preUsed>totalF){
+    if(preUsed<=raw){
+      const self={};Object.keys(post).forEach(k=>self[k]=post[k]);
+      return{mode:"3",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed,limitBreakdown:`前段已用 ${preUsed}`,total:totalAll,in:preUsed,over:postUsed,copay:preCopayVal,selfItems:self}}
+    }else{
+      const over=Math.max(0,preUsed+postUsed-raw);
+      const u=mergeUsage(pre,post); 
+      const s=sortP(u);
+      let rem=over;
+      const self={};
+      const prot={...u};
+      for(const k of s){
+        if(rem<=0)break;
+        const p=SERVICE_ITEMS[k].price;
+        const q=prot[k];
+        if(!q)continue;
+        const c=p*q;
+        if(c<=rem){self[k]=q;prot[k]=0;rem-=c}
+        else{const n=Math.ceil(rem/p);const r=Math.min(n,q);self[k]=r;prot[k]-=r;rem-=r*p}
+      }
+      
+      let finalPreCopay = preCopayVal;
+      if (preIn > raw) {
+         const rates = { normal: 0.16, midlow: 0.05, low: 0.0 };
+         finalPreCopay = Math.round(raw * rates[id]);
+      }
+
+      return{mode:"4",preF,postF,totalF,preUsed,postUsed,bc:{limit:raw,limitBreakdown:`CMS原額度 ${raw}`,total:totalAll,in:totalAll-over,over,copay:finalPreCopay+getCopay(prot,id),selfItems:self}}
+    }
+  }
+
+  // Case 2
+  if(preUsed>preF&&preUsed<=totalF){
+    const remPost=totalF-preUsed;
+    const overP=Math.max(0,postUsed-remPost);
+    const s=sortP(post);
+    let quota=remPost;
+    const self={};
+    const prot={};
+    for(const k of s){
+      const p=SERVICE_ITEMS[k].price;
+      const q=post[k];
+      const can=Math.floor(quota/p);
+      const r=Math.min(can,q);
+      if(r>0){prot[k]=r;quota-=r*p}
+      const remQ=q-r;
+      if(remQ>0)self[k]=remQ
+    }
+    return{mode:"2",preF,postF,totalF,preUsed,postUsed,bc:{limit:totalF,limitBreakdown:`前段公式 ${preF} + 後段公式 ${postF}`,total:totalAll,in:preUsed+(postUsed-overP),over:overP,copay:preCopayVal+getCopay(prot,id),selfItems:self}}
+  }
+
+  // Case 1 (Strict)
+  if(postUsed>postF){
+    const overP=postUsed-postF;
+    const s=sortP(post);
+    let quota=postF;
+    const self={};
+    const prot={};
+    for(const k of s){
+      const p=SERVICE_ITEMS[k].price;
+      const q=post[k];
+      const can=Math.floor(quota/p);
+      const r=Math.min(can,q);
+      if(r>0){prot[k]=r;quota-=r*p}
+      const remQ=q-r;
+      if(remQ>0)self[k]=remQ
+    }
+    return{mode:"1-over",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed+postF,limitBreakdown:`前段已用 ${preUsed} + 後段公式 ${postF}`,total:totalAll,in:preUsed+postF,over:overP,copay:preCopayVal+getCopay(prot,id),selfItems:self}}
+  }
+
+  // Normal Case 1
+  return{mode:"1",preF,postF,totalF,preUsed,postUsed,bc:{limit:preUsed+postUsed,limitBreakdown:`前段已用 ${preUsed} + 後段已用 ${postUsed}`,total:totalAll,in:preUsed+postUsed,over:0,copay:preCopayVal+getCopay(post,id),selfItems:{}}}
+}
+
 function computeGA_SC(u,cms,id,type){const lim=CMS_LIMIT[cms][type];const t=getTotal(u);const over=Math.max(0,t-lim);return{u,limit:lim,total:t,in:t-over,over,copay:getCopay(u,id),selfMoney:over}}
 
 let lastResult={}; let shareText="";
@@ -656,7 +746,8 @@ function computeAndShowResults() {
     const map = {"1":"情境一 (額度正常)", "1-over":"情境一 (後段超額)", "2":"情境二 (前段超額)", "3":"情境三 (前段爆表)", "4":"情境四 (全月爆表)"};
     h1 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="2">首月轉換：${map[resRaw.mode]}</th></tr><tr><td>公式總額度</td><td>${resRaw.totalF} <br><span style="font-size:0.85em; color:#666;">(前${resRaw.preF} + 後${resRaw.postF})</span></td></tr><tr><td>前段已用</td><td>${resRaw.preUsed}</td></tr><tr><td>後段已用</td><td>${resRaw.postUsed}</td></tr></table></div>`;
   }
-  h1 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="2">1. B+C 費用</th></tr><tr><td>額度上限</td><td>${bc.limit} <br><span style="font-size:0.85em; color:#666;">(${bc.limitBreakdown||'CMS原額度'})</span></td></tr><tr><td>實際使用</td><td>${bc.total||0}</td></tr><tr><td>部分負擔</td><td>${bc.copay||0}</td></tr><tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${bcSelf}</td></tr></table></div>`;
+  // 修正：額度上限與來源並排顯示
+  h1 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="2">1. B+C 費用</th></tr><tr><td>額度上限</td><td>${bc.limit} <span style="font-size:0.9em; color:#666; margin-left:8px;">(${bc.limitBreakdown||'CMS原額度'})</span></td></tr><tr><td>實際使用</td><td>${bc.total||0}</td></tr><tr><td>部分負擔</td><td>${bc.copay||0}</td></tr><tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${bcSelf}</td></tr></table></div>`;
   
   if (rGA) h1 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="2">2. GA 喘息</th></tr><tr><td>部分負擔</td><td>${rGA.copay}</td></tr><tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${rGA.selfMoney}</td></tr></table></div>`;
   if (rSC) h1 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="2">3. SC 短照</th></tr><tr><td>部分負擔</td><td>${rSC.copay}</td></tr><tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${rSC.selfMoney}</td></tr></table></div>`;
@@ -695,7 +786,7 @@ function generateImage(elementId) {
     scale: 2, // 縮放比例，2 為 Retina 清晰度
     useCORS: true,
     backgroundColor: "#ffffff",
-    windowWidth: 600 // 強制寬度
+    windowWidth: 700 // 強制寬度，配合加大字體
   }).then(canvas => {
     // 復原
     element.classList.remove("high-contrast-mode");
