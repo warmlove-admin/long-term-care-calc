@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>長照額度計算機（嚴格分段管制版）</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+/* ================= 基礎設定 ================= */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  padding: 15px 15px 120px 15px;
+  line-height: 1.5;
+  background: #F0F2F5;
+  margin: 0;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+}
+
+h2 {
+  color: #1976D2;
+  margin: 0 0 15px 0;
+  font-size: 1.5rem;
+  border-bottom: 3px solid #1976D2;
+  padding-bottom: 10px;
+}
+h3 {
+  color: #2c3e50;
+  margin: 15px 0;
+  font-size: 1.3rem;
+  border-left: 6px solid #1976D2;
+  padding-left: 12px;
+  background: #fff;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+h4 {
+  background: #E3F2FD;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 25px;
+  color: #0D47A1;
+  font-size: 1.1rem;
+}
+
+.step { display: none; animation: fadeIn 0.3s; }
+.step.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  background: #fff;
+}
+input:focus, select:focus {
+  border-color: #1976D2;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+}
+
+.batch-container {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+.add-btn {
+  background: #4CAF50;
+  color: white;
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+}
+.chip-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 30px;
+  border: 1px solid #ddd;
+  margin: 4px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chip-label.checked {
+  background: #E3F2FD;
+  border-color: #1976D2;
+  color: #0D47A1;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
+}
+.chip-label input { display: none; }
+
+.item-block {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left: 6px solid #FF9800;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  display: none;
+}
+.item-block.active { display: block; }
+
+.item-header {
+  display: flex;
+  align-items: center;       
+  justify-content: flex-start; 
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #ccc;
+  padding-bottom: 8px;
+  gap: 10px;
+}
+.item-code {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #333;
+  flex-shrink: 0;
+}
+.item-price {
+  color: #666;
+  font-size: 0.95rem;
+  margin-left: auto;
+  white-space: nowrap; 
+}
+.btn-delete-item {
+  background: #FFEBEE;
+  color: #D32F2F;
+  border: 1px solid #FFCDD2;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-delete-item:active { background: #D32F2F; color: white; }
+
+.row { display: flex; gap: 10px; }
+.row input, .row select { margin-bottom: 0; }
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+table {
+  width: 100%;
+  min-width: 300px;
+  border-collapse: collapse;
+  background: white;
+  font-size: 14px;
+}
+th, td {
+  padding: 10px 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+  color: #333;
+}
+th { background: #f5f5f5; color: #555; font-weight: bold; }
+.title-cell { background: #E3F2FD; font-weight: bold; color: #0D47A1; }
+.highlight-cell { color: #D32F2F; font-weight: bold; }
+.subtotal-row { background: #FFFDE7; font-weight: bold; }
+
+.high-contrast-mode {
+  background: #fff !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+.high-contrast-mode .table-wrapper {
+  box-shadow: none !important;
+  border: 2px solid #000 !important;
+  margin-bottom: 20px !important;
+}
+.high-contrast-mode th, .high-contrast-mode td {
+  border: 1px solid #000 !important;
+  color: #000 !important;
+}
+.high-contrast-mode .title-cell {
+  background: #eee !important;
+  color: #000 !important;
+  border-bottom: 2px solid #000 !important;
+}
+.high-contrast-mode .highlight-cell { color: #000 !important; text-decoration: underline; }
+.high-contrast-mode .subtotal-row { background: #fff !important; border-top: 2px double #000 !important; }
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+  padding-bottom: 20px;
+}
+button.action-btn {
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-line { background: #06C755; }
+.btn-copy { background: #333; }
+.btn-img { background: #FF9800; }
+.btn-restart { background: #607D8B; }
+.btn-back { background: #757575; }
+.btn-note { font-size: 0.85rem; font-weight: normal; opacity: 0.9; display: block; margin-top: 2px; }
+
+.nav-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 15px 20px;
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+  display: flex;
+  gap: 15px;
+  z-index: 1000;
+}
+.nav-footer button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+.btn-next { background: #1976D2; color: white; }
+.btn-prev { background: #f1f1f1; color: #555; }
+
+</style>
+</head>
+
+<body>
+
+<h2>📘 長照額度計算機</h2>
+
+<!-- 🔵 Step 1：基本資料 -->
+<div id="step1" class="step active">
+  <h3>1. 基本資料</h3>
+  <div style="background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
+    <label>CMS 等級 <span style="color:red">*</span></label>
+    <select id="cmsLevel">
+      <option value="">請選擇</option>
+      <option value="2">等級 2</option>
+      <option value="3">等級 3</option>
+      <option value="4">等級 4</option>
+      <option value="5">等級 5</option>
+      <option value="6">等級 6</option>
+      <option value="7">等級 7</option>
+      <option value="8">等級 8</option>
+    </select>
+
+    <label>福利身分別</label>
+    <select id="identity">
+      <option value="normal">一般戶 (16%)</option>
+      <option value="midlow">中低收 (5%)</option>
+      <option value="low">低收 (0%)</option>
+    </select>
+
+    <label>是否聘僱外籍看護？</label>
+    <select id="hasCaregiver">
+      <option value="no">否</option>
+      <option value="yes">是</option>
+    </select>
+
+    <div id="caregiverExtra" style="display:none; background:#FFF3E0; padding:15px; border-radius:8px; margin-top:10px;">
+      <label>是否為「外看首月轉換」？</label>
+      <select id="isFirstMonth">
+        <option value="no">否</option>
+        <option value="yes">是</option>
+      </select>
+
+      <div id="caregiverDateBlock" style="display:none;">
+        <label>外看介接日期</label>
+        <input type="date" id="caregiverDate">
+        <div id="preUsedBlock">
+          <label>介接前已用金額 (選填)</label>
+          <input type="number" id="preUsedAmount" placeholder="若留空則依 Step2 計算">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔵 Step 2：定期使用 -->
+<div id="step2-normal" class="step">
+  <h3>2. 定期項目 (B+C)</h3>
+  <div class="batch-container">
+    <div style="color:#1976D2; font-weight:bold; margin-bottom:8px;">1. 點選項目 (可多選)</div>
+    <div id="batchRegularList"></div>
+    <div style="color:#1976D2; font-weight:bold; margin:15px 0 8px;">2. 設定頻率</div>
+    <div class="row">
+      <input type="number" id="batchRegularDay" placeholder="每日(1-20)" min="1" max="20">
+      <input type="number" id="batchRegularWeek" placeholder="每週(1-7)" min="1" max="7">
+    </div>
+    <select id="batchRegularMonth">
+      <option value="">選擇每月週數</option>
+      <option value="4">4 週</option>
+      <option value="4.5">4.5 週</option>
+      <option value="5">5 週</option>
+    </select>
+    <button type="button" class="add-btn" onclick="applyBatchRegular()">➕ 加入清單</button>
+  </div>
+  <div class="added-list-container">
+    <div style="font-weight:bold; margin-bottom:5px;">已加入清單：</div>
+    <div id="regularBC"></div>
+  </div>
+</div>
+
+<!-- 🔵 Step 2b：不定期使用 -->
+<div id="step2b-normal" class="step">
+  <h3>2-2. 不定期項目 (B+C)</h3>
+  <div class="batch-container">
+    <div style="color:#1976D2; font-weight:bold; margin-bottom:8px;">1. 點選項目</div>
+    <div id="batchIrregularList"></div>
+    <div style="color:#1976D2; font-weight:bold; margin:15px 0 8px;">2. 設定次數</div>
+    <div class="row">
+      <input type="number" id="batchIrregularCountUnit" placeholder="單位(1-20)" min="1" max="20">
+      <input type="number" id="batchIrregularCount" placeholder="月次數(1-30)" min="1" max="30">
+    </div>
+    <button type="button" class="add-btn" onclick="applyBatchIrregular()">➕ 加入清單</button>
+  </div>
+  <div class="added-list-container">
+    <div style="font-weight:bold; margin-bottom:5px;">已加入清單：</div>
+    <div id="irregularBC"></div>
+  </div>
+</div>
+
+<!-- 🔵 Step 2 (首月前) -->
+<div id="step2-pre" class="step">
+  <h3>2. 介接前使用 (B+C)</h3>
+  <div class="batch-container">
+    <div id="batchPreList"></div>
+    <div style="margin-top:10px;">
+      <input type="number" id="batchPreCount" placeholder="本月總次數">
+    </div>
+    <button type="button" class="add-btn" onclick="applyBatchPre()">➕ 加入清單</button>
+  </div>
+  <div class="added-list-container">
+    <div style="font-weight:bold; margin-bottom:5px;">已加入清單：</div>
+    <div id="preItems"></div>
+  </div>
+</div>
+
+<!-- 🔵 Step 2 (首月後) -->
+<div id="step2-post" class="step">
+  <h3>2. 介接後使用 (B+C)</h3>
+  <div class="batch-container">
+    <div id="batchPostList"></div>
+    <div style="margin-top:10px;">
+      <input type="number" id="batchPostCount" placeholder="本月總次數">
+    </div>
+    <button type="button" class="add-btn" onclick="applyBatchPost()">➕ 加入清單</button>
+  </div>
+  <div class="added-list-container">
+    <div style="font-weight:bold; margin-bottom:5px;">已加入清單：</div>
+    <div id="postItems"></div>
+  </div>
+</div>
+
+<!-- 🔵 Step 3 (GA/SC) -->
+<div id="step3-gasc" class="step">
+  <h3>3. GA / SC 類</h3>
+  <h4>GA 喘息服務</h4>
+  <div id="GAItems"></div>
+  <h4>SC 短期照顧</h4>
+  <div id="SCItems"></div>
+</div>
+
+<!-- 🔵 Step 4 (確認) -->
+<div id="step4" class="step">
+  <h3>4. 確認資料</h3>
+  <div style="background:white; padding:20px; border-radius:10px; border:1px solid #ccc;">
+    <p><strong>CMS 等級：</strong><span id="confirmCMS"></span></p>
+    <p><strong>身分別：</strong><span id="confirmIdentity"></span></p>
+    <p><strong>外籍看護：</strong><span id="confirmCaregiver"></span></p>
+    <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+    <p style="color:#666; font-size:0.95em;">確認無誤後，請點擊下方紅色按鈕進行計算。</p>
+  </div>
+</div>
+
+<!-- 🔵 Step 5 (結果) -->
+<div id="step5" class="step">
+  <h3>📊 計算結果</h3>
+  <div id="resultArea" style="background:#fff; padding:20px 10px; border-radius:8px; margin-bottom:20px;"></div>
+  
+  <div class="action-buttons">
+    <button class="action-btn btn-back" onclick="prevStep()">
+      <div>⬅️ 返回修改資料 (上一步)</div>
+    </button>
+    <button class="action-btn btn-line" onclick="shareToLine()">
+      <div>💬 傳送給 Line 好友<span class="btn-note">將文字摘要傳送至 Line</span></div>
+    </button>
+    <button class="action-btn btn-copy" onclick="copyToClipboard()">
+      <div>📋 複製結果 (官方帳號用)<span class="btn-note">複製後可貼上到其他 APP</span></div>
+    </button>
+    <button class="action-btn btn-img" onclick="downloadImage()">
+      <div>🖼️ 下載結果圖片 (高清)<span class="btn-note">存為圖片檔方便保存</span></div>
+    </button>
+    <button class="action-btn btn-restart" onclick="restart()">🔄 重新開始</button>
+  </div>
+</div>
+
+<!-- 🟣 Sticky Footer -->
+<div class="nav-footer">
+  <button id="navPrev" class="btn-prev" onclick="prevStep()">上一步</button>
+  <button id="navNext" class="btn-next" onclick="nextStep()">下一步</button>
+</div>
+
+<script>
+/* ================= 邏輯與資料 ================= */
+const FLOW_NORMAL = ["step1", "step2-normal", "step2b-normal", "step3-gasc", "step4", "step5"];
+const FLOW_CAREGIVER_FIRSTMONTH = ["step1", "step2-pre", "step2-post", "step3-gasc", "step4", "step5"];
+const FLOW_CAREGIVER_NOT_FIRSTMONTH = ["step1", "step2-post", "step3-gasc", "step4", "step5"];
+
+let currentFlow = [...FLOW_NORMAL];
+let flowIndex = 0;
+
+function updateNavButtons() {
+  const prevBtn = document.getElementById("navPrev");
+  const nextBtn = document.getElementById("navNext");
+  const currentStepId = currentFlow[flowIndex];
+
+  if (flowIndex === 0) prevBtn.style.visibility = "hidden";
+  else prevBtn.style.visibility = "visible";
+
+  if (currentStepId === "step5") document.querySelector(".nav-footer").style.display = "none";
+  else document.querySelector(".nav-footer").style.display = "flex";
+
+  if (currentStepId === "step4") {
+    nextBtn.textContent = "🚀 開始計算";
+    nextBtn.style.background = "#D32F2F";
+  } else {
+    nextBtn.textContent = "下一步";
+    nextBtn.style.background = "#1976D2";
+  }
+}
+
+function showStepById(id) {
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  const dom = document.getElementById(id);
+  if (dom) { dom.classList.add("active"); window.scrollTo(0, 0); }
+  updateNavButtons();
+}
+
+function nextStep() {
+  if (currentFlow[flowIndex] === "step1") {
+    const cms = document.getElementById("cmsLevel").value;
+    if (!cms) { alert("請選擇 CMS 等級！"); return; }
+    applyFilters(); 
+  }
+  if (flowIndex < currentFlow.length - 1) {
+    flowIndex++;
+    showStepById(currentFlow[flowIndex]);
+    if (currentFlow[flowIndex] === "step4") {
+      document.getElementById("confirmCMS").textContent = document.getElementById("cmsLevel").value;
+      const idMap = {normal:"一般戶", midlow:"中低收", low:"低收"};
+      document.getElementById("confirmIdentity").textContent = idMap[document.getElementById("identity").value];
+      document.getElementById("confirmCaregiver").textContent = document.getElementById("hasCaregiver").value === "yes" ? "是" : "否";
+    }
+    if (currentFlow[flowIndex] === "step5") computeAndShowResults();
+  }
+}
+
+function prevStep() {
+  if (flowIndex > 0) { flowIndex--; showStepById(currentFlow[flowIndex]); }
+}
+
+function restart() {
+  if(confirm("確定要重新開始嗎？")) location.reload();
+}
+
+function rebuildFlow() {
+  const has = document.getElementById("hasCaregiver").value;
+  const first = document.getElementById("isFirstMonth").value;
+  if (has === "no") currentFlow = [...FLOW_NORMAL];
+  else {
+    if (first === "yes") currentFlow = [...FLOW_CAREGIVER_FIRSTMONTH];
+    else currentFlow = [...FLOW_CAREGIVER_NOT_FIRSTMONTH];
+  }
+  if (!currentFlow.includes(document.querySelector(".step.active")?.id)) {
+    flowIndex = 0; showStepById("step1");
+  }
+  applyFilters();
+}
+
+document.getElementById("hasCaregiver").addEventListener("change", function() {
+  const yes = this.value === "yes";
+  document.getElementById("caregiverExtra").style.display = yes ? "block" : "none";
+  rebuildFlow();
+});
+document.getElementById("isFirstMonth").addEventListener("change", function() {
+  const yes = this.value === "yes";
+  document.getElementById("caregiverDateBlock").style.display = yes ? "block" : "none";
+  rebuildFlow();
+});
+document.getElementById("cmsLevel").addEventListener("change", applyFilters);
+
+showStepById("step1");
+
+function generateItemInput(containerId, filterFn, mode) {
+  const container = document.getElementById(containerId);
+  Object.keys(SERVICE_ITEMS).forEach(code => {
+    const item = SERVICE_ITEMS[code];
+    const shouldShow = filterFn(item, code);
+    let block = container.querySelector(`.item-block[data-code="${code}"]`);
+    if (shouldShow) {
+      if (!block) {
+        const d = document.createElement("div");
+        d.className = "item-block";
+        d.dataset.code = code;
+        const header = `
+          <div class="item-header">
+            <div class="item-code">${code}</div>
+            <div class="item-price">$${item.price}</div>
+            <button type="button" class="btn-delete-item" onclick="removeItem(this)">🗑️ 刪除</button>
+          </div>`;
+        if (mode === "regular") {
+          d.innerHTML = `${header}<div class="row">
+              <input type="number" class="unit-day" placeholder="日(1-20)" min="1" max="20" onchange="markActive(this)">
+              <input type="number" class="unit-week" placeholder="週(1-7)" min="1" max="7" onchange="markActive(this)">
+            </div>
+            <select class="unit-month" onchange="markActive(this)">
+                <option value="">月週數</option>
+                <option value="4">4</option>
+                <option value="4.5">4.5</option>
+                <option value="5">5</option>
+            </select>`;
+        } else {
+          d.innerHTML = `${header}<div class="row">
+              <input type="number" class="unit-count" placeholder="次數" min="0" onchange="markActive(this)">
+            </div>`;
+        }
+        container.appendChild(d);
+      }
+    } else {
+      if (block) block.remove();
+    }
+  });
+}
+
+const SERVICE_ITEMS = {
+  "BA01": {type:"BA", price:260, copay:{normal:41, midlow:13, low:0}, pool:"BC"},
+  "BA02": {type:"BA", price:195, copay:{normal:31, midlow:9, low:0}, pool:"BC"},
+  "BA03": {type:"BA", price:35, copay:{normal:5, midlow:1, low:0}, pool:"BC"},
+  "BA04": {type:"BA", price:130, copay:{normal:20, midlow:6, low:0}, pool:"BC"},
+  "BA05": {type:"BA", price:310, copay:{normal:49, midlow:15, low:0}, pool:"BC"},
+  "BA07": {type:"BA", price:325, copay:{normal:52, midlow:16, low:0}, pool:"BC"},
+  "BA08": {type:"BA", price:500, copay:{normal:80, midlow:25, low:0}, pool:"BC"},
+  "BA09": {type:"BA", price:2200, copay:{normal:352, midlow:110, low:0}, pool:"BC"},
+  "BA09a":{type:"BA", price:2500, copay:{normal:400, midlow:125, low:0}, pool:"BC"},
+  "BA10": {type:"BA", price:155, copay:{normal:24, midlow:7, low:0}, pool:"BC"},
+  "BA11": {type:"BA", price:195, copay:{normal:31, midlow:9, low:0}, pool:"BC"},
+  "BA12": {type:"BA", price:130, copay:{normal:20, midlow:6, low:0}, pool:"BC"},
+  "BA13": {type:"BA", price:195, copay:{normal:31, midlow:9, low:0}, pool:"BC"},
+  "BA14": {type:"BA", price:685, copay:{normal:109, midlow:34, low:0}, pool:"BC"},
+  "BA15(自用)":{type:"BA", price:195, copay:{normal:31, midlow:9, low:0}, pool:"BC"},
+  "BA15(共用)":{type:"BA", price:195, copay:{normal:112, midlow:102, low:97}, pool:"BC"},
+  "BA16": {type:"BA", price:130, copay:{normal:20, midlow:6, low:0}, pool:"BC"},
+  "BA17a":{type:"BA", price:75, copay:{normal:12, midlow:3, low:0}, pool:"BC"},
+  "BA17b":{type:"BA", price:65, copay:{normal:10, midlow:3, low:0}, pool:"BC"},
+  "BA17c":{type:"BA", price:50, copay:{normal:8, midlow:2, low:0}, pool:"BC"},
+  "BA17d1":{type:"BA", price:50, copay:{normal:8, midlow:2, low:0}, pool:"BC"},
+  "BA17d2":{type:"BA", price:50, copay:{normal:8, midlow:2, low:0}, pool:"BC"},
+  "BA17e":{type:"BA", price:50, copay:{normal:8, midlow:2, low:0}, pool:"BC"},
+  "BA18": {type:"BA", price:200, copay:{normal:32, midlow:10, low:0}, pool:"BC"},
+  "BA20": {type:"BA", price:175, copay:{normal:28, midlow:8, low:0}, pool:"BC"},
+  "BA22": {type:"BA", price:130, copay:{normal:20, midlow:6, low:0}, pool:"BC"},
+  "BA23": {type:"BA", price:200, copay:{normal:32, midlow:10, low:0}, pool:"BC"},
+  "BA24": {type:"BA", price:220, copay:{normal:35, midlow:11, low:0}, pool:"BC"},
+  "BB01": {type:"BB", price:675, copay:{normal:108,midlow:33,low:0}, pool:"BC"},
+  "BB02": {type:"BB", price:340, copay:{normal:54, midlow:17, low:0}, pool:"BC"},
+  "BB03": {type:"BB", price:840, copay:{normal:134,midlow:42,low:0}, pool:"BC"},
+  "BB04": {type:"BB", price:420, copay:{normal:67, midlow:21, low:0}, pool:"BC"},
+  "BB05": {type:"BB", price:920, copay:{normal:147,midlow:46,low:0}, pool:"BC"},
+  "BB06": {type:"BB", price:460, copay:{normal:73, midlow:23, low:0}, pool:"BC"},
+  "BB07": {type:"BB", price:1045, copay:{normal:167,midlow:52,low:0}, pool:"BC"},
+  "BB08": {type:"BB", price:525, copay:{normal:84, midlow:26, low:0}, pool:"BC"},
+  "BB09": {type:"BB", price:1130, copay:{normal:180,midlow:56,low:0}, pool:"BC"},
+  "BB10": {type:"BB", price:565, copay:{normal:90, midlow:28, low:0}, pool:"BC"},
+  "BB11": {type:"BB", price:1210, copay:{normal:193,midlow:60,low:0}, pool:"BC"},
+  "BB12": {type:"BB", price:605, copay:{normal:96, midlow:30, low:0}, pool:"BC"},
+  "BB13": {type:"BB", price:1285, copay:{normal:205,midlow:64,low:0}, pool:"BC"},
+  "BB14": {type:"BB", price:645, copay:{normal:103,midlow:32,low:0}, pool:"BC"},
+  "BC01": {type:"BC", price:625, copay:{normal:100,midlow:31,low:0}, pool:"BC"},
+  "BC02": {type:"BC", price:315, copay:{normal:50, midlow:15, low:0}, pool:"BC"},
+  "BC03": {type:"BC", price:760, copay:{normal:121,midlow:38,low:0}, pool:"BC"},
+  "BC04": {type:"BC", price:380, copay:{normal:60, midlow:19, low:0}, pool:"BC"},
+  "BC05": {type:"BC", price:785, copay:{normal:125,midlow:39,low:0}, pool:"BC"},
+  "BC06": {type:"BC", price:395, copay:{normal:63, midlow:19, low:0}, pool:"BC"},
+  "BC07": {type:"BC", price:880, copay:{normal:140,midlow:44,low:0}, pool:"BC"},
+  "BC08": {type:"BC", price:440, copay:{normal:70, midlow:22, low:0}, pool:"BC"},
+  "BC09": {type:"BC", price:960, copay:{normal:153,midlow:48,low:0}, pool:"BC"},
+  "BC10": {type:"BC", price:480, copay:{normal:76, midlow:24, low:0}, pool:"BC"},
+  "BC11": {type:"BC", price:980, copay:{normal:156,midlow:49,low:0}, pool:"BC"},
+  "BC12": {type:"BC", price:490, copay:{normal:78, midlow:24, low:0}, pool:"BC"},
+  "BC13": {type:"BC", price:1040, copay:{normal:166,midlow:52,low:0}, pool:"BC"},
+  "BC14": {type:"BC", price:520, copay:{normal:83, midlow:26, low:0}, pool:"BC"},
+  "BD01": {type:"BD", price:200, copay:{normal:32, midlow:10, low:0}, pool:"BC"},
+  "BD02": {type:"BD", price:150, copay:{normal:24, midlow:7,  low:0}, pool:"BC"},
+  "BD03": {type:"BD", price:115, copay:{normal:18, midlow:5,  low:0}, pool:"BC"},
+  "CA07": {type:"CA", price:1500, copay:{normal:720,midlow:225,low:0}, pool:"BC"},
+  "CA08": {type:"CA", price:1500, copay:{normal:960,midlow:300,low:0}, pool:"BC"},
+  "CB01a":{type:"CB", price:1500, copay:{normal:720,midlow:225,low:0}, pool:"BC"},
+  "CB02": {type:"CB", price:1500, copay:{normal:1440,midlow:450,low:0}, pool:"BC"},
+  "CB03": {type:"CB", price:1500, copay:{normal:720,midlow:225,low:0}, pool:"BC"},
+  "CB04": {type:"CB", price:1500, copay:{normal:1440,midlow:450,low:0}, pool:"BC"},
+  "CC01": {type:"CC", price:2000, copay:{normal:320,midlow:100,low:0}, pool:"BC"},
+  "CD02": {type:"CD", price:1500, copay:{normal:960,midlow:300,low:0}, pool:"BC"},
+  "GA03": {type:"GA", price:1250, copay:{normal:200,midlow:62, low:0}, pool:"GA"},
+  "GA04": {type:"GA", price:625,  copay:{normal:100,midlow:31, low:0}, pool:"GA"},
+  "GA05": {type:"GA", price:2310, copay:{normal:369,midlow:115,low:0}, pool:"GA"},
+  "GA06": {type:"GA", price:200,  copay:{normal:32, midlow:10, low:0}, pool:"GA"},
+  "GA07": {type:"GA", price:170,  copay:{normal:27, midlow:8,  low:0}, pool:"GA"},
+  "GA09": {type:"GA", price:770,  copay:{normal:123,midlow:38, low:0}, pool:"GA"},
+  "SC03": {type:"SC", price:1250, copay:{normal:200,midlow:62, low:0}, pool:"SC"},
+  "SC04": {type:"SC", price:625,  copay:{normal:100,midlow:31, low:0}, pool:"SC"},
+  "SC05": {type:"SC", price:2310, copay:{normal:369,midlow:115,low:0}, pool:"SC"},
+  "SC06": {type:"SC", price:200,  copay:{normal:32, midlow:10, low:0}, pool:"SC"},
+  "SC07": {type:"SC", price:170,  copay:{normal:27, midlow:8,  low:0}, pool:"SC"},
+  "SC09": {type:"SC", price:770,  copay:{normal:123,midlow:38, low:0}, pool:"SC"}
+};
+
+const CMS_LIMIT = {
+  2: {BC:10020, GA:32340, SC:87780},
+  3: {BC:15460, GA:32340, SC:87780},
+  4: {BC:18580, GA:32340, SC:87780},
+  5: {BC:24100, GA:32340, SC:87780},
+  6: {BC:28070, GA:32340, SC:87780},
+  7: {BC:32090, GA:48510, SC:71610},
+  8: {BC:36180, GA:48510, SC:71610}
+};
+
+const FORBIDDEN_BA_WITH_CAREGIVER = new Set([
+  "BA01","BA02","BA03","BA04","BA05","BA07","BA08","BA10","BA11",
+  "BA12","BA15","BA15(共用)","BA15(自用)","BA16","BA17a","BA17b","BA17c",
+  "BA17d1","BA17d2","BA17e","BA18","BA20","BA22","BA23","BA24"
+]);
+
+const BB_BC_ALLOWED = {
+  2:["BB01","BB02","BC01","BC02"],
+  3:["BB03","BB04","BC03","BC04"],
+  4:["BB05","BB06","BC05","BC06"],
+  5:["BB07","BB08","BC07","BC08"],
+  6:["BB09","BB10","BC09","BC10"],
+  7:["BB11","BB12","BC11","BC12"],
+  8:["BB13","BB14","BC13","BC14"]
+};
+const BC_TYPES = ["BA", "BB", "BC", "BD", "CA", "CB", "CC", "CD"];
+
+function markActive(input) {
+  const block = input.closest('.item-block');
+  if(input.value && input.value > 0) block.classList.add('active');
+}
+
+function removeItem(btn) {
+  const block = btn.closest('.item-block');
+  if(!block) return;
+  block.querySelectorAll('input').forEach(input => input.value = '');
+  block.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+  block.classList.remove('active');
+}
+
+function applyFilters() {
+  const cms = Number(document.getElementById("cmsLevel").value);
+  const has = document.getElementById("hasCaregiver").value === "yes";
+  if (!cms) return;
+  const bcFilterFn = (item, code) => {
+    if (!BC_TYPES.includes(item.type)) return false;
+    if (item.type === "BB" || item.type === "BC") return BB_BC_ALLOWED[cms].includes(code);
+    if (has && item.type === "BA" && FORBIDDEN_BA_WITH_CAREGIVER.has(code)) return false;
+    return true;
+  };
+  generateItemInput("regularBC", bcFilterFn, "regular");
+  generateItemInput("irregularBC", bcFilterFn, "irregular");
+  generateItemInput("preItems", (item, code) => {
+     if (!BC_TYPES.includes(item.type)) return false; 
+     if (item.type === "BB" || item.type === "BC") return BB_BC_ALLOWED[cms].includes(code);
+     return true;
+  }, "irregular");
+  generateItemInput("postItems", bcFilterFn, "irregular");
+  generateItemInput("GAItems", item => item.pool === "GA", "irregular");
+  generateItemInput("SCItems", item => item.pool === "SC", "irregular");
+  
+  document.querySelectorAll("#GAItems .item-block, #SCItems .item-block").forEach(b => {
+      b.classList.add("active");
+  });
+  
+  buildBatchCodeList("#regularBC",  "batchRegularList");
+  buildBatchCodeList("#irregularBC","batchIrregularList");
+  buildBatchCodeList("#preItems",   "batchPreList");
+  buildBatchCodeList("#postItems",  "batchPostList");
+}
+
+function buildBatchCodeList(containerSelector, listContainerId) {
+  const listDom = document.getElementById(listContainerId);
+  listDom.innerHTML = "";
+  const blocks = document.querySelectorAll(containerSelector + " .item-block");
+  if (!blocks.length) { listDom.innerHTML = "<span style='color:#999'>無可用項目</span>"; return; }
+  const groups = {};
+  blocks.forEach(b => {
+    const code = b.dataset.code;
+    const prefix = code.slice(0, 2);
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(code);
+  });
+  Object.keys(groups).sort().forEach(prefix => {
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "chip-group";
+    groupDiv.innerHTML = `<div class="chip-group-title">${prefix} 系列</div>`;
+    groups[prefix].sort().forEach(code => {
+      const label = document.createElement("label");
+      label.className = "chip-label";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = code;
+      cb.onchange = function() {
+        if(this.checked) this.parentElement.classList.add("checked");
+        else this.parentElement.classList.remove("checked");
+      };
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(code));
+      groupDiv.appendChild(label);
+    });
+    listDom.appendChild(groupDiv);
+  });
+}
+
+function applyBatchCommon(listId, targetContainerId, inputIds, isRegular) {
+  const checked = document.querySelectorAll(`#${listId} input:checked`);
+  if (checked.length === 0) { alert("請先選擇項目！"); return; }
+  const hasVal = inputIds.some(id => document.getElementById(id).value !== "");
+  if (!hasVal) { alert("請輸入數值！"); return; }
+  checked.forEach(cb => {
+    const code = cb.value;
+    const block = document.querySelector(`#${targetContainerId} .item-block[data-code="${code}"]`);
+    if (!block) return;
+    if (isRegular) {
+       const v1 = document.getElementById(inputIds[0]).value;
+       const v2 = document.getElementById(inputIds[1]).value;
+       const v3 = document.getElementById(inputIds[2]).value;
+       if(v1) block.querySelector(".unit-day").value = v1;
+       if(v2) block.querySelector(".unit-week").value = v2;
+       if(v3) block.querySelector(".unit-month").value = v3;
+    } else {
+       if(inputIds.length === 2) {
+          const u = document.getElementById(inputIds[0]).value;
+          const t = document.getElementById(inputIds[1]).value;
+          if(u && t) block.querySelector(".unit-count").value = Number(u) * Number(t);
+       } else {
+          const c = document.getElementById(inputIds[0]).value;
+          if(c) block.querySelector(".unit-count").value = c;
+       }
+    }
+    block.classList.add("active");
+    cb.checked = false; 
+    cb.parentElement.classList.remove("checked");
+  });
+  inputIds.forEach(id => document.getElementById(id).value = "");
+  document.querySelector(`#${targetContainerId}`).scrollIntoView({behavior: "smooth"});
+}
+
+function applyBatchRegular() { applyBatchCommon("batchRegularList", "regularBC", ["batchRegularDay", "batchRegularWeek", "batchRegularMonth"], true); }
+function applyBatchIrregular() { applyBatchCommon("batchIrregularList", "irregularBC", ["batchIrregularCountUnit", "batchIrregularCount"], false); }
+function applyBatchPre() { applyBatchCommon("batchPreList", "preItems", ["batchPreCount"], false); }
+function applyBatchPost() { applyBatchCommon("batchPostList", "postItems", ["batchPostCount"], false); }
+
+/* ================= 計算邏輯 ================= */
+function num(v) { return isNaN(Number(v)) ? 0 : Number(v); }
+function calcRegularAmount(block) {
+  const d = num(block.querySelector(".unit-day")?.value);
+  const w = num(block.querySelector(".unit-week")?.value);
+  const m = num(block.querySelector(".unit-month")?.value);
+  return d * w * m;
+}
+function calcIrregularAmount(block) { return num(block.querySelector(".unit-count")?.value); }
+function getUsage(containerId, mode) {
+  const c = document.getElementById(containerId);
+  if(!c) return {};
+  const res = {};
+  c.querySelectorAll(".item-block").forEach(b => {
+     const amt = (mode==="regular") ? calcRegularAmount(b) : calcIrregularAmount(b);
+     if(amt>0) res[b.dataset.code] = amt;
+  });
+  return res;
+}
+function mergeUsage(...args) {
+  const r = {};
+  args.forEach(o => { Object.keys(o).forEach(k => { r[k]=(r[k]||0)+o[k]; }); });
+  return r;
+}
+function getTotal(u) { let s=0; Object.keys(u).forEach(k=>s+=u[k]*SERVICE_ITEMS[k].price); return s; }
+function getCopay(u, id) { let s=0; Object.keys(u).forEach(k=>s+=u[k]*SERVICE_ITEMS[k].copay[id]); return s; }
+function sortP(u) { return Object.keys(u).sort((a,b)=>SERVICE_ITEMS[a].price-SERVICE_ITEMS[b].price); }
+
+function computeBC_Normal(cms, id, reg, irreg) {
+  const u = mergeUsage(reg, irreg);
+  const total = getTotal(u);
+  const limit = CMS_LIMIT[cms].BC;
+  const over = Math.max(0, total - limit);
+  if (over<=0) return { u, total, limit, in: total, over:0, copay: getCopay(u, id), selfItems:{} };
+  const sorted = sortP(u);
+  let rem = over; const self = {}; const prot = {...u};
+  for(const k of sorted) {
+    if(rem<=0) break;
+    const p = SERVICE_ITEMS[k].price; const q = prot[k]; const cost = p*q;
+    if(cost <= rem) { self[k]=(self[k]||0)+q; prot[k]=0; rem-=cost; }
+    else { const n = Math.ceil(rem/p); const real = Math.min(n, q); self[k]=(self[k]||0)+real; prot[k]-=real; rem-=real*p; }
+  }
+  return { u, total, limit, in: total-over, over, copay: getCopay(prot, id), selfItems: self };
+}
+
+function computeBC_Caregiver(cms, id, post) {
+  const u = {...post};
+  const raw = CMS_LIMIT[cms].BC;
+  const limit = Math.ceil(raw * 0.3);
+  const total = getTotal(u);
+  const over = Math.max(0, total - limit);
+  if (over<=0) return { u, limit, total, in: total, over:0, copay: getCopay(u, id), selfItems:{} };
+  const sorted = sortP(u);
+  let rem = over; const self = {}; const prot = {...u};
+  for(const k of sorted) {
+    if(rem<=0) break;
+    const p = SERVICE_ITEMS[k].price; const q = prot[k]; const cost = p*q;
+    if(cost <= rem) { self[k]=(self[k]||0)+q; prot[k]=0; rem-=cost; }
+    else { const n = Math.ceil(rem/p); const real = Math.min(n, q); self[k]=(self[k]||0)+real; prot[k]-=real; rem-=real*p; }
+  }
+  return { u, limit, total, in: total-over, over, copay: getCopay(prot, id), selfItems: self };
+}
+
+function computeBC_Switch(cms, id, pre, post, preMoneyInput, day) {
+  const raw = CMS_LIMIT[cms].BC;
+  const preF = Math.floor(raw * ((day-1)/30));
+  const postF = Math.floor(raw * 0.3 * ((30-day+1)/30));
+  const totalF = preF + postF;
+  const preUsed = (preMoneyInput>0) ? preMoneyInput : getTotal(pre);
+  const postUsed = getTotal(post);
+  const totalAll = preUsed + postUsed; 
+
+  // Case 3 & 4
+  if (preUsed > totalF) {
+     if (preUsed <= raw) {
+        const self = {}; Object.keys(post).forEach(k=>self[k]=post[k]);
+        return { mode:"3", preF, postF, totalF, preUsed, postUsed, bc:{limit: preUsed, limitBreakdown: `前段已用 ${preUsed} (後段無額度)`, total: totalAll, in: preUsed, over: postUsed, copay: getCopay(pre, id), selfItems: self} };
+     } else {
+        const total = preUsed + postUsed;
+        const over = Math.max(0, total - raw);
+        const u = mergeUsage(pre, post);
+        const sorted = sortP(u);
+        let rem = over; const self = {}; const prot = {...u};
+        for(const k of sorted) {
+           if(rem<=0) break;
+           const p = SERVICE_ITEMS[k].price; const q = prot[k]; if(!q) continue; const cost = p*q;
+           if(cost<=rem) { self[k]=q; prot[k]=0; rem-=cost; }
+           else { const n=Math.ceil(rem/p); const real = Math.min(n,q); self[k]=real; prot[k]-=real; rem-=real*p; }
+        }
+        return { mode:"4", preF, postF, totalF, preUsed, postUsed, bc:{limit: raw, limitBreakdown: `CMS原額度 ${raw}`, total: totalAll, in: total-over, over, copay: getCopay(prot, id), selfItems: self} };
+     }
+  }
+  
+  // Case 2
+  if (preUsed > preF && preUsed <= totalF) {
+     const remPost = totalF - preUsed; 
+     const overP = Math.max(0, postUsed - remPost); 
+     const sorted = sortP(post); 
+     let quota = remPost;
+     
+     const self = {}; 
+     const prot = {}; 
+     
+     for(const k of sorted) {
+        const p = SERVICE_ITEMS[k].price;
+        const q = post[k];
+        const canCover = Math.floor(quota / p);
+        const realCover = Math.min(canCover, q);
+        if (realCover > 0) {
+            prot[k] = realCover;
+            quota -= realCover * p;
+        }
+        const remainingQ = q - realCover;
+        if (remainingQ > 0) {
+            self[k] = remainingQ;
+        }
+     }
+     
+     return { 
+         mode:"2", preF, postF, totalF, preUsed, postUsed, 
+         bc:{
+             limit: totalF, 
+             limitBreakdown: `前段公式 ${preF} + 後段公式 ${postF}`,
+             total: totalAll, 
+             in: preUsed + (postUsed - overP), 
+             over: overP, 
+             copay: getCopay(pre, id) + getCopay(prot, id), 
+             selfItems: self
+         } 
+     };
+  }
+  
+  // Case 1 (嚴格分段管制)
+  if (postUsed > postF) {
+      const overP = postUsed - postF;
+      const sorted = sortP(post); 
+      let quota = postF;
+      const self = {};
+      const prot = {};
+      
+      for(const k of sorted) {
+        const p = SERVICE_ITEMS[k].price;
+        const q = post[k];
+        const canCover = Math.floor(quota / p);
+        const realCover = Math.min(canCover, q);
+        if (realCover > 0) {
+            prot[k] = realCover;
+            quota -= realCover * p;
+        }
+        const remainingQ = q - realCover;
+        if (remainingQ > 0) {
+            self[k] = remainingQ;
+        }
+      }
+      
+      return { 
+          mode: "1-over", 
+          preF, postF, totalF, preUsed, postUsed, 
+          bc: {
+              limit: preUsed + postF, 
+              limitBreakdown: `前段已用 ${preUsed} + 後段公式 ${postF}`,
+              total: totalAll, 
+              in: preUsed + postF, // 額度內金額：前段已用 + 後段公式額度
+              over: overP, 
+              copay: getCopay(pre, id) + getCopay(prot, id), 
+              selfItems: self
+          } 
+      };
+  }
+
+  // Normal Case 1
+  return { mode:"1", preF, postF, totalF, preUsed, postUsed, bc:{limit: preUsed+postUsed, limitBreakdown: `前段已用 ${preUsed} + 後段已用 ${postUsed}`, total: totalAll, in: preUsed+postUsed, over:0, copay: getCopay(pre, id)+getCopay(post, id), selfItems: {}} };
+}
+
+function computeGA_SC(u, cms, id, type) {
+  const lim = CMS_LIMIT[cms][type];
+  const total = getTotal(u);
+  const over = Math.max(0, total - lim);
+  return { u, limit:lim, total, in: total-over, over, copay: getCopay(u, id), selfMoney: over };
+}
+
+let lastResult = {}; 
+let shareText = "";
+
+function getDetailRow(code, qty, id) {
+  const price = SERVICE_ITEMS[code].price;
+  const copayUnit = SERVICE_ITEMS[code].copay[id];
+  const total = price * qty;
+  const copay = Math.floor(qty * copayUnit); 
+  return `<tr>
+    <td>${code}</td>
+    <td>$${price}</td>
+    <td>${qty}</td>
+    <td>$${total}</td>
+    <td>$${copay}</td>
+  </tr>`;
+}
+
+function computeAndShowResults() {
+  const cms = Number(document.getElementById("cmsLevel").value);
+  const id = document.getElementById("identity").value;
+  const has = document.getElementById("hasCaregiver").value === "yes";
+  const first = document.getElementById("isFirstMonth").value === "yes";
+  const date = document.getElementById("caregiverDate").value;
+  const preIn = num(document.getElementById("preUsedAmount").value);
+
+  const reg = getUsage("regularBC", "regular");
+  const irreg = getUsage("irregularBC", "irregular");
+  const pre = getUsage("preItems", "irregular");
+  const post = getUsage("postItems", "irregular");
+  const ga = getUsage("GAItems", "irregular");
+  const sc = getUsage("SCItems", "irregular");
+
+  let resRaw;
+  if (!has) resRaw = computeBC_Normal(cms, id, reg, irreg);
+  else if (!first) resRaw = computeBC_Caregiver(cms, id, post);
+  else {
+    let d = 1;
+    if(date) { const p = date.split("-"); d = Number(p[2]) || 1; }
+    resRaw = computeBC_Switch(cms, id, pre, post, preIn, d);
+  }
+
+  const bc = resRaw.bc ? resRaw.bc : resRaw;
+  let bcSelf = 0;
+  if(bc.selfItems) Object.keys(bc.selfItems).forEach(k => bcSelf += bc.selfItems[k]*SERVICE_ITEMS[k].price);
+
+  const rGA = (Object.keys(ga).length>0) ? computeGA_SC(ga, cms, id, "GA") : null;
+  const rSC = (Object.keys(sc).length>0) ? computeGA_SC(sc, cms, id, "SC") : null;
+
+  const gaC = rGA?rGA.copay:0; const gaS = rGA?rGA.selfMoney:0;
+  const scC = rSC?rSC.copay:0; const scS = rSC?rSC.selfMoney:0;
+  const totalPay = (bc.copay||0) + bcSelf + gaC + gaS + scC + scS;
+
+  const idText = {normal:"一般", midlow:"中低", low:"低收"}[id];
+  shareText = `【長照試算結果】\n`;
+  shareText += `CMS等級：${cms}\n`;
+  shareText += `身分別：${idText}\n`;
+  shareText += `------------------\n`;
+  shareText += `💰 總應付金額：$${totalPay}\n`;
+  shareText += `(包含部分負擔 + 超額自費)\n\n`;
+  shareText += `[B+C類]\n`;
+  shareText += `部分負擔: $${bc.copay||0}\n`;
+  shareText += `超額自費: $${bcSelf}\n`;
+  if (rGA) {
+    shareText += `\n[GA喘息]\n`;
+    shareText += `部分負擔: $${rGA.copay}\n`;
+    shareText += `超額自費: $${rGA.selfMoney}\n`;
+  }
+  if (rSC) {
+    shareText += `\n[SC短照]\n`;
+    shareText += `部分負擔: $${rSC.copay}\n`;
+    shareText += `超額自費: $${rSC.selfMoney}\n`;
+  }
+
+  let h = "";
+  
+  if (resRaw.mode) {
+    const map = {
+        "1":"情境一 (未超額)", 
+        "1-over":"情境一 (後段超額-分段管制)",
+        "2":"情境二 (前段超額-挪用後段)", 
+        "3":"情境三 (前段已爆總額)", 
+        "4":"情境四 (已爆CMS原額)"
+    };
+    h += `<div class="table-wrapper"><table>
+      <tr><th class="title-cell" colspan="2">首月轉換：${map[resRaw.mode]}</th></tr>
+      <tr><td>公式總額度</td><td>${resRaw.totalF} <br><span style="font-size:0.85em; color:#666;">(前${resRaw.preF} + 後${resRaw.postF})</span></td></tr>
+      <tr><td>前段已用</td><td>${resRaw.preUsed}</td></tr>
+      <tr><td>後段已用</td><td>${resRaw.postUsed}</td></tr>
+    </table></div>`;
+  }
+
+  h += `<div class="table-wrapper"><table>
+    <tr><th class="title-cell" colspan="2">1. B+C 費用</th></tr>
+    <tr><td>額度上限</td><td>${bc.limit} <br><span style="font-size:0.85em; color:#666;">(${bc.limitBreakdown || 'CMS原額度'})</span></td></tr>
+    <tr><td>實際使用金額</td><td>${bc.total||0}</td></tr>
+    <tr><td>部分負擔</td><td>${bc.copay||0}</td></tr>
+    <tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${bcSelf}</td></tr>
+  </table></div>`;
+
+  if (bcSelf > 0) {
+    h += `<div class="table-wrapper"><table>
+      <tr><th class="title-cell" colspan="3">⚠️ B+C 自費明細 (包含在上方自費中)</th></tr>
+      <tr><th>項目</th><th>數量</th><th>金額</th></tr>`;
+    Object.keys(bc.selfItems).forEach(k => {
+      h += `<tr><td>${k}</td><td>${bc.selfItems[k]}</td><td>${bc.selfItems[k]*SERVICE_ITEMS[k].price}</td></tr>`;
+    });
+    h += `</table></div>`;
+  }
+
+  if (rGA) {
+    h += `<div class="table-wrapper"><table>
+      <tr><th class="title-cell" colspan="2">2. GA 喘息</th></tr>
+      <tr><td>部分負擔</td><td>${rGA.copay}</td></tr>
+      <tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${rGA.selfMoney}</td></tr>
+    </table></div>`;
+  }
+  if (rSC) {
+    h += `<div class="table-wrapper"><table>
+      <tr><th class="title-cell" colspan="2">3. SC 短照</th></tr>
+      <tr><td>部分負擔</td><td>${rSC.copay}</td></tr>
+      <tr><td class="highlight-cell">超額自費</td><td class="highlight-cell">${rSC.selfMoney}</td></tr>
+    </table></div>`;
+  }
+
+  h += `<div class="total-amount-box" style="background:#FFF9C4; padding:20px; text-align:center; border-radius:10px; border:2px solid #FFC107; margin-top:15px;">
+    <div style="font-size:1.1em; opacity:0.8;">本月應付總金額</div>
+    <div style="font-size:2em; font-weight:bold; color:#D32F2F;">$${totalPay}</div>
+  </div>`;
+
+  h += `<h4 style="margin-top:30px;">④ 費用明細 (使用項目列表)</h4>`;
+  h += `<div class="table-wrapper"><table>
+    <tr><th>項目</th><th>單價</th><th>數量</th><th>總價</th><th>部負(估)</th></tr>`;
+  
+  const fullBC = mergeUsage(reg, irreg, pre, post);
+  Object.keys(fullBC).forEach(k => {
+    h += getDetailRow(k, fullBC[k], id);
+  });
+
+  if (rGA) {
+    Object.keys(ga).forEach(k => { h += getDetailRow(k, ga[k], id); });
+  }
+  if (rSC) {
+    Object.keys(sc).forEach(k => { h += getDetailRow(k, sc[k], id); });
+  }
+  
+  h += `</table></div>`;
+
+  document.getElementById("resultArea").innerHTML = h;
+}
+
+function shareToLine() {
+  if (!shareText) { alert("請先計算結果！"); return; }
+  const url = `https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`;
+  window.open(url, '_blank');
+}
+
+function copyToClipboard() {
+  if (!shareText) { alert("請先計算結果！"); return; }
+  const el = document.createElement('textarea');
+  el.value = shareText;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+  alert("✅ 已複製！\n請打開 Line 官方帳號 APP，長按貼上即可。");
+}
+
+function downloadImage() {
+  const element = document.getElementById("resultArea");
+  if (!element.innerHTML) { alert("請先計算結果！"); return; }
+
+  element.classList.add("high-contrast-mode");
+
+  const buttons = document.querySelector(".action-buttons");
+  buttons.style.display = "none";
+  
+  html2canvas(element, { 
+    scale: 3, 
+    useCORS: true,
+    backgroundColor: "#ffffff"
+  }).then(canvas => {
+    element.classList.remove("high-contrast-mode");
+    buttons.style.display = "flex";
+    
+    const link = document.createElement('a');
+    link.download = '長照試算結果_高清版.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  }).catch(err => {
+    alert("圖片產生失敗");
+    element.classList.remove("high-contrast-mode");
+    buttons.style.display = "flex";
+  });
+}
+
+</script>
+</body>
+</html>
