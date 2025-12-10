@@ -41,7 +41,8 @@ h4 {
   border-radius: 6px;
   margin-top: 25px;
   color: #0D47A1;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .step { display: none; animation: fadeIn 0.3s; }
@@ -82,6 +83,16 @@ input:focus, select:focus {
   font-weight: bold;
   border: none;
 }
+.chip-group { margin-bottom: 15px; }
+.chip-group-title { 
+    font-weight: bold; 
+    color: #1565C0; 
+    font-size: 1rem; 
+    margin-bottom: 5px; 
+    border-bottom: 1px solid #E3F2FD;
+    padding-bottom: 2px;
+}
+
 .chip-label {
   display: inline-flex;
   align-items: center;
@@ -127,6 +138,7 @@ input:focus, select:focus {
   font-size: 1.1rem;
   color: #333;
   flex-shrink: 0;
+  line-height: 1.4;
 }
 .item-price {
   color: #666;
@@ -150,82 +162,96 @@ input:focus, select:focus {
 .row { display: flex; gap: 10px; }
 .row input, .row select { margin-bottom: 0; }
 
+/* ==========================================================================
+   統一表格樣式
+   ========================================================================== */
 .table-wrapper {
   overflow-x: auto;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   border-radius: 8px;
   border: 1px solid #ccc;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
 table {
   width: 100%;
-  min-width: 300px;
+  min-width: 350px;
   border-collapse: collapse;
   background: white;
-  font-size: 14px;
+  font-size: 18px; 
+  table-layout: fixed;
 }
+
 th, td {
-  padding: 10px 8px;
+  padding: 12px 10px;
   border: 1px solid #ddd;
   text-align: left;
   color: #333;
+  word-wrap: break-word;
 }
+
 th { background: #f5f5f5; color: #555; font-weight: bold; }
-.title-cell { background: #E3F2FD; font-weight: bold; color: #0D47A1; }
+.title-cell { background: #E3F2FD; font-weight: bold; color: #0D47A1; font-size: 20px; }
 .highlight-cell { color: #D32F2F; font-weight: bold; }
 .subtotal-row { background: #FFFDE7; font-weight: bold; }
 
+/* 總金額框 */
+.total-amount-box { 
+    background: #FFF9C4; 
+    padding: 15px; 
+    text-align: center; 
+    border-radius: 10px; 
+    border: 2px solid #FFC107; 
+    margin-top: 15px;
+}
+.total-amount-box div:first-child { font-size: 1.1em; opacity: 0.8; }
+.total-amount-box div:last-child { font-size: 2em; font-weight: bold; color: #D32F2F; }
+
 /* ==========================================================================
-   🌟 截圖高對比模式 (針對圖片輸出優化)
+   🌟 截圖高對比模式
    ========================================================================== */
 .high-contrast-mode {
   background: #fff !important;
   padding: 20px !important;
   margin: 0 !important;
   border: none !important;
-  width: 800px !important; /* 加寬圖片以容納更多欄位 */
+  width: 1000px !important;
   box-sizing: border-box;
 }
 .high-contrast-mode .table-wrapper {
   box-shadow: none !important;
   border: 2px solid #000 !important;
-  margin-bottom: 20px !important;
+  margin-bottom: 30px !important;
 }
-
-/* 表格文字全面加大 */
 .high-contrast-mode table {
-  font-size: 26px !important; /* 字體加大 */
+  font-size: 34px !important; 
+  line-height: 1.5 !important;
 }
 .high-contrast-mode th, .high-contrast-mode td {
-  border: 1px solid #000 !important;
+  border: 2px solid #000 !important;
   color: #000 !important;
-  padding: 15px !important; /* 增加內距 */
+  padding: 18px !important;
 }
 .high-contrast-mode .title-cell {
   background: #eee !important;
   color: #000 !important;
-  border-bottom: 2px solid #000 !important;
-  font-size: 28px !important; /* 標題更大 */
+  border-bottom: 3px solid #000 !important;
+  font-size: 38px !important;
 }
 .high-contrast-mode .highlight-cell { 
   color: #000 !important; 
   text-decoration: underline;
   font-weight: 900 !important;
 }
-
-/* 總金額框縮小 */
 .high-contrast-mode .total-amount-box { 
-    border: 3px solid #000 !important; 
+    border: 4px solid #000 !important; 
     background: #fff !important; 
     color: #000 !important;
-    font-size: 24px !important; /* 字體稍微縮小 */
-    padding: 10px !important;   /* 高度縮小 */
-    margin-top: 10px !important;
+    font-size: 28px !important;
+    padding: 15px !important;
 }
-.high-contrast-mode .total-amount-box div:first-child {
-    font-size: 18px !important; /* "本月應付" 小標更小 */
-}
-/* ========================================================================== */
+.high-contrast-mode .total-amount-box div:first-child { font-size: 26px !important; }
+.high-contrast-mode .total-amount-box div:last-child { font-size: 40px !important; }
 
 /* ================= 操作按鈕 ================= */
 .action-buttons {
@@ -297,6 +323,8 @@ button.action-btn {
   padding: 8px 15px;
   border-radius: 20px;
 }
+.tip-desktop { display: none; }
+.tip-mobile { display: none; }
 
 /* ================= 置底導覽列 ================= */
 .nav-footer {
@@ -450,8 +478,6 @@ button.action-btn {
 <div id="step5" class="step">
   <h3>📊 計算結果</h3>
   
-  <!-- 分離的結果顯示區 (用於截圖) -->
-  
   <!-- 圖片 1：費用總表 -->
   <div id="resultPart1" style="background:#fff; padding:20px 10px; border-radius:8px; margin-bottom:15px;"></div>
   
@@ -484,7 +510,8 @@ button.action-btn {
 
 <!-- 🟣 Image Modal (手機圖片預覽) -->
 <div id="imageModal" class="image-modal">
-  <div id="modalTip" class="modal-tip"></div>
+  <div class="modal-tip tip-mobile">📱 請長按圖片 → 加入照片</div>
+  <div class="modal-tip tip-desktop">💻 請按右鍵 → 另存圖片</div>
   <img id="modalImg" src="" alt="Result Image">
   <button class="modal-close-btn" onclick="closeModal()">關閉視窗</button>
 </div>
@@ -496,7 +523,7 @@ button.action-btn {
 </div>
 
 <script>
-/* ================= 邏輯與資料 ================= */
+/* ... (邏輯部分與之前相同) ... */
 const FLOW_NORMAL = ["step1", "step2-normal", "step2b-normal", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_FIRSTMONTH = ["step1", "step2-pre", "step2-post", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_NOT_FIRSTMONTH = ["step1", "step2-post", "step3-gasc", "step4", "step5"];
@@ -560,11 +587,20 @@ function generateItemInput(containerId, filterFn, mode) {
   Object.keys(SERVICE_ITEMS).forEach(code => {
     const item = SERVICE_ITEMS[code];
     const shouldShow = filterFn(item, code);
+    
+    const prefix = code.substring(0, 2);
+    const isSpecial = ["CA", "CB", "CC", "CD"].includes(prefix);
+    if (mode === "regular" && isSpecial) return; 
+
     let block = container.querySelector(`.item-block[data-code="${code}"]`);
     if (shouldShow) {
       if (!block) {
         const d = document.createElement("div"); d.className = "item-block"; d.dataset.code = code;
-        const header = `<div class="item-header"><div class="item-code">${code}</div><div class="item-price">$${item.price}</div><button type="button" class="btn-delete-item" onclick="removeItem(this)">🗑️ 刪除</button></div>`;
+        
+        // 【修正】：將紅色提示移除，改到下方 buildBatchCodeList 標題處顯示
+        let labelText = `${code}（單價：${item.price}）`;
+
+        const header = `<div class="item-header"><div class="item-code"><label>${labelText}</label></div><div class="item-price"></div><button type="button" class="btn-delete-item" onclick="removeItem(this)">🗑️ 刪除</button></div>`;
         if (mode === "regular") {
           d.innerHTML = `${header}<div class="row"><input type="number" class="unit-day" placeholder="日(1-20)" min="1" max="20" onchange="markActive(this)"><input type="number" class="unit-week" placeholder="週(1-7)" min="1" max="7" onchange="markActive(this)"></div><select class="unit-month" onchange="markActive(this)"><option value="">月週數</option><option value="4">4</option><option value="4.5">4.5</option><option value="5">5</option></select>`;
         } else {
@@ -585,7 +621,7 @@ const BB_BC_ALLOWED={2:["BB01","BB02","BC01","BC02"],3:["BB03","BB04","BC03","BC
 const BC_TYPES=["BA","BB","BC","BD","CA","CB","CC","CD"];
 
 function applyFilters(){const cms=Number(document.getElementById("cmsLevel").value);const has=document.getElementById("hasCaregiver").value==="yes";if(!cms)return;const bcFilterFn=(item,code)=>{if(!BC_TYPES.includes(item.type))return false;if(item.type==="BB"||item.type==="BC")return BB_BC_ALLOWED[cms].includes(code);if(has&&item.type==="BA"&&FORBIDDEN_BA_WITH_CAREGIVER.has(code))return false;return true};generateItemInput("regularBC",bcFilterFn,"regular");generateItemInput("irregularBC",bcFilterFn,"irregular");generateItemInput("preItems",(item,code)=>{if(!BC_TYPES.includes(item.type))return false;if(item.type==="BB"||item.type==="BC")return BB_BC_ALLOWED[cms].includes(code);return true},"irregular");generateItemInput("postItems",bcFilterFn,"irregular");generateItemInput("GAItems",item=>item.pool==="GA","irregular");generateItemInput("SCItems",item=>item.pool==="SC","irregular");document.querySelectorAll("#GAItems .item-block, #SCItems .item-block").forEach(b=>{b.classList.add("active")});buildBatchCodeList("#regularBC","batchRegularList");buildBatchCodeList("#irregularBC","batchIrregularList");buildBatchCodeList("#preItems","batchPreList");buildBatchCodeList("#postItems","batchPostList")}
-function buildBatchCodeList(c,l){const d=document.getElementById(l);d.innerHTML="";const b=document.querySelectorAll(c+" .item-block");if(!b.length){d.innerHTML="<span style='color:#999'>無可用項目</span>";return}const g={};b.forEach(k=>{const code=k.dataset.code;const p=code.slice(0,2);if(!g[p])g[p]=[];g[p].push(code)});Object.keys(g).sort().forEach(p=>{const gd=document.createElement("div");gd.className="chip-group";gd.innerHTML=`<div class="chip-group-title">${p} 系列</div>`;g[p].sort().forEach(code=>{const lb=document.createElement("label");lb.className="chip-label";const cb=document.createElement("input");cb.type="checkbox";cb.value=code;cb.onchange=function(){if(this.checked)this.parentElement.classList.add("checked");else this.parentElement.classList.remove("checked")};lb.appendChild(cb);lb.appendChild(document.createTextNode(code));gd.appendChild(lb)});d.appendChild(gd)})}
+function buildBatchCodeList(c,l){const d=document.getElementById(l);d.innerHTML="";const b=document.querySelectorAll(c+" .item-block");if(!b.length){d.innerHTML="<span style='color:#999'>無可用項目</span>";return}const g={};b.forEach(k=>{const code=k.dataset.code;const p=code.slice(0,2);if(!g[p])g[p]=[];g[p].push(code)});Object.keys(g).sort().forEach(p=>{const gd=document.createElement("div");gd.className="chip-group";let titleHtml=`${p} 系列`;if(["CA","CB","CD"].includes(p)){titleHtml+=` <span style="color:#D32F2F; font-size:0.9em;">(以1次價格計算，非1單位)</span>`}gd.innerHTML=`<div class="chip-group-title">${titleHtml}</div>`;g[p].sort().forEach(code=>{const lb=document.createElement("label");lb.className="chip-label";const cb=document.createElement("input");cb.type="checkbox";cb.value=code;cb.onchange=function(){if(this.checked)this.parentElement.classList.add("checked");else this.parentElement.classList.remove("checked")};lb.appendChild(cb);lb.appendChild(document.createTextNode(code));gd.appendChild(lb)});d.appendChild(gd)})}
 function applyBatchCommon(l,t,ids,reg){const c=document.querySelectorAll(`#${l} input:checked`);if(!c.length){alert("請先選擇項目！");return}const has=ids.some(i=>document.getElementById(i).value!=="");if(!has){alert("請輸入數值！");return}c.forEach(cb=>{const code=cb.value;const b=document.querySelector(`#${t} .item-block[data-code="${code}"]`);if(!b)return;if(reg){const v1=document.getElementById(ids[0]).value;const v2=document.getElementById(ids[1]).value;const v3=document.getElementById(ids[2]).value;if(v1)b.querySelector(".unit-day").value=v1;if(v2)b.querySelector(".unit-week").value=v2;if(v3)b.querySelector(".unit-month").value=v3}else{if(ids.length===2){const u=document.getElementById(ids[0]).value;const time=document.getElementById(ids[1]).value;if(u&&time)b.querySelector(".unit-count").value=Number(u)*Number(time)}else{const v=document.getElementById(ids[0]).value;if(v)b.querySelector(".unit-count").value=v}}b.classList.add("active");cb.checked=false;cb.parentElement.classList.remove("checked")});ids.forEach(i=>document.getElementById(i).value="");document.querySelector(`#${t}`).scrollIntoView({behavior:"smooth"})}
 function applyBatchRegular(){applyBatchCommon("batchRegularList","regularBC",["batchRegularDay","batchRegularWeek","batchRegularMonth"],true)}
 function applyBatchIrregular(){applyBatchCommon("batchIrregularList","irregularBC",["batchIrregularCountUnit","batchIrregularCount"],false)}
@@ -704,6 +740,20 @@ function computeGA_SC(u,cms,id,type){const lim=CMS_LIMIT[cms][type];const t=getT
 
 let lastResult={}; let shareText="";
 
+function getDetailRow(code, qty, id) {
+  const price = SERVICE_ITEMS[code].price;
+  const copayUnit = SERVICE_ITEMS[code].copay[id];
+  const total = price * qty;
+  const copay = Math.floor(qty * copayUnit); 
+  return `<tr>
+    <td>${code}</td>
+    <td>$${price}</td>
+    <td>${copayUnit}</td>
+    <td>${qty}</td>
+    <td>$${total}</td>
+  </tr>`;
+}
+
 function computeAndShowResults() {
   const cms = Number(document.getElementById("cmsLevel").value);
   const id = document.getElementById("identity").value;
@@ -766,7 +816,15 @@ function computeAndShowResults() {
   const fullBC = mergeUsage(reg, irreg, pre, post);
   
   // 1. 補助額度明細
-  let h2 = `<h4>④ 補助額度明細 (B+C/GA/SC)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>部負單價</th><th>數量</th><th>小計</th></tr>`;
+  let h2 = `<h4>④ 補助額度明細 (B+C/GA/SC)</h4><div class="table-wrapper"><table>
+    <colgroup>
+      <col style="width:20%">
+      <col style="width:20%">
+      <col style="width:25%">
+      <col style="width:15%">
+      <col style="width:20%">
+    </colgroup>
+    <tr><th>項目</th><th>單價</th><th>部分負擔<br>單價</th><th>數量</th><th>小計</th></tr>`;
   
   // 遍歷所有使用的 B+C 項目，扣除自費數量後，若大於0則顯示
   Object.keys(fullBC).forEach(k => {
@@ -775,24 +833,17 @@ function computeAndShowResults() {
     let subsidyQty = totalQty - selfQty;
     
     if(subsidyQty > 0) {
-       const p = SERVICE_ITEMS[k].price;
-       const copayUnit = SERVICE_ITEMS[k].copay[id];
-       const subTotal = p * subsidyQty;
-       h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${subsidyQty}</td><td>${subTotal}</td></tr>`;
+       h2 += getDetailRow(k, subsidyQty, id);
     }
   });
   
   // GA/SC 目前不支援細項拆分自費，若有使用量且系統無自費細項邏輯，暫視為全補助 (超額金額另計)
   // 此處直接列出所有 GA/SC 項目
   if (rGA) Object.keys(ga).forEach(k => { 
-      const p = SERVICE_ITEMS[k].price;
-      const copayUnit = SERVICE_ITEMS[k].copay[id];
-      h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${ga[k]}</td><td>${p*ga[k]}</td></tr>`; 
+      h2 += getDetailRow(k, ga[k], id);
   });
   if (rSC) Object.keys(sc).forEach(k => { 
-      const p = SERVICE_ITEMS[k].price;
-      const copayUnit = SERVICE_ITEMS[k].copay[id];
-      h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${sc[k]}</td><td>${p*sc[k]}</td></tr>`; 
+      h2 += getDetailRow(k, sc[k], id);
   });
   
   h2 += `</table></div>`;
@@ -834,45 +885,56 @@ function generateImage(elementId) {
   const element = document.getElementById(elementId);
   if (!element.innerHTML) { alert("請先計算結果！"); return; }
 
-  // 套用高對比模式 (放大字體)
+  // 1. 強制加入高對比模式 class，並透過 requestAnimationFrame 確保樣式渲染
   element.classList.add("high-contrast-mode");
 
-  html2canvas(element, { 
-    scale: 2, // 縮放比例，2 為 Retina 清晰度
-    useCORS: true,
-    backgroundColor: "#ffffff",
-    windowWidth: 700 // 強制寬度，配合加大字體
-  }).then(canvas => {
-    // 復原
-    element.classList.remove("high-contrast-mode");
-    
-    const imgData = canvas.toDataURL("image/png");
-    
-    // 顯示 Modal
-    const modal = document.getElementById("imageModal");
-    const modalImg = document.getElementById("modalImg");
-    
-    // 偵測裝置類型以顯示不同提示
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const mobileTip = document.querySelector('.tip-mobile');
-    const desktopTip = document.querySelector('.tip-desktop');
-    
-    if (isTouchDevice) {
-        mobileTip.style.display = 'block';
-        desktopTip.style.display = 'none';
-    } else {
-        mobileTip.style.display = 'none';
-        desktopTip.style.display = 'block';
-    }
-    
-    modalImg.src = imgData;
-    modal.classList.add("show");
-    
-  }).catch(err => {
-    alert("圖片產生失敗");
-    console.error(err);
-    element.classList.remove("high-contrast-mode");
-  });
+  // 2. 暫時隱藏按鈕，避免截圖時出現干擾
+  const buttons = document.querySelector(".action-buttons");
+  if(buttons) buttons.style.display = "none";
+
+  // 3. 使用 setTimeout 延遲執行 html2canvas，給瀏覽器時間重繪樣式
+  setTimeout(() => {
+    html2canvas(element, { 
+      scale: 3, // 提高縮放比例以提升清晰度
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: 1000, // 設定虛擬視窗寬度，避免手機版面影響
+      logging: false
+    }).then(canvas => {
+      // 4. 復原樣式與按鈕顯示
+      element.classList.remove("high-contrast-mode");
+      if(buttons) buttons.style.display = "flex";
+      
+      const imgData = canvas.toDataURL("image/png");
+      
+      // 5. 顯示 Modal 供下載
+      const modal = document.getElementById("imageModal");
+      const modalImg = document.getElementById("modalImg");
+      
+      // 偵測裝置類型以顯示不同提示
+      const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const mobileTip = document.querySelector('.tip-mobile');
+      const desktopTip = document.querySelector('.tip-desktop');
+      
+      if (isTouchDevice) {
+          if(mobileTip) mobileTip.style.display = 'block';
+          if(desktopTip) desktopTip.style.display = 'none';
+      } else {
+          if(mobileTip) mobileTip.style.display = 'none';
+          if(desktopTip) desktopTip.style.display = 'block';
+      }
+      
+      modalImg.src = imgData;
+      modal.classList.add("show");
+      
+    }).catch(err => {
+      // 錯誤處理
+      alert("圖片產生失敗: " + err.message);
+      console.error(err);
+      element.classList.remove("high-contrast-mode");
+      if(buttons) buttons.style.display = "flex";
+    });
+  }, 800); // 延遲 800ms
 }
 
 function closeModal() {
