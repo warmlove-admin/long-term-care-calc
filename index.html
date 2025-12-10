@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<!-- 禁止縮放，維持版面穩定 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>長照額度計算機（202512）</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -176,13 +175,15 @@ th { background: #f5f5f5; color: #555; font-weight: bold; }
 .highlight-cell { color: #D32F2F; font-weight: bold; }
 .subtotal-row { background: #FFFDE7; font-weight: bold; }
 
-/* 🌟 截圖高對比模式 (放大字體 - 再加大) */
+/* ==========================================================================
+   🌟 截圖高對比模式 (針對圖片輸出優化)
+   ========================================================================== */
 .high-contrast-mode {
   background: #fff !important;
-  padding: 20px !important; 
+  padding: 20px !important;
   margin: 0 !important;
   border: none !important;
-  width: 700px !important; /* 稍微加寬以容納並排文字 */
+  width: 800px !important; /* 加寬圖片以容納更多欄位 */
   box-sizing: border-box;
 }
 .high-contrast-mode .table-wrapper {
@@ -190,33 +191,41 @@ th { background: #f5f5f5; color: #555; font-weight: bold; }
   border: 2px solid #000 !important;
   margin-bottom: 20px !important;
 }
-/* 字體加大設定 */
+
+/* 表格文字全面加大 */
 .high-contrast-mode table {
-  font-size: 22px !important; /* 一般儲存格文字加大 */
+  font-size: 26px !important; /* 字體加大 */
 }
 .high-contrast-mode th, .high-contrast-mode td {
   border: 1px solid #000 !important;
   color: #000 !important;
-  padding: 14px !important; /* 增加內距讓文字呼吸 */
+  padding: 15px !important; /* 增加內距 */
 }
 .high-contrast-mode .title-cell {
   background: #eee !important;
   color: #000 !important;
   border-bottom: 2px solid #000 !important;
-  font-size: 24px !important; /* 標題儲存格加大 */
+  font-size: 28px !important; /* 標題更大 */
 }
 .high-contrast-mode .highlight-cell { 
   color: #000 !important; 
   text-decoration: underline;
   font-weight: 900 !important;
 }
+
+/* 總金額框縮小 */
 .high-contrast-mode .total-amount-box { 
     border: 3px solid #000 !important; 
     background: #fff !important; 
     color: #000 !important;
-    font-size: 32px !important; /* 總金額特大 */
-    padding: 30px !important;
+    font-size: 24px !important; /* 字體稍微縮小 */
+    padding: 10px !important;   /* 高度縮小 */
+    margin-top: 10px !important;
 }
+.high-contrast-mode .total-amount-box div:first-child {
+    font-size: 18px !important; /* "本月應付" 小標更小 */
+}
+/* ========================================================================== */
 
 /* ================= 操作按鈕 ================= */
 .action-buttons {
@@ -247,9 +256,9 @@ button.action-btn {
 .btn-back { background: #757575; }
 .btn-note { font-size: 0.85rem; font-weight: normal; opacity: 0.9; display: block; margin-top: 2px; }
 
-/* ================= 圖片預覽 Modal (手機下載用) ================= */
+/* ================= 圖片預覽 Modal ================= */
 .image-modal {
-  display: none; /* 預設隱藏 */
+  display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.85);
@@ -320,7 +329,7 @@ button.action-btn {
 
 <h2>📘 長照額度計算機</h2>
 
-<!-- 🔵 Step 1 ~ 4 維持不變 -->
+<!-- 🔵 Step 1 ~ 4 (保持不變) -->
 <div id="step1" class="step active">
   <h3>1. 基本資料</h3>
   <div style="background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
@@ -462,12 +471,11 @@ button.action-btn {
       <div>📋 複製結果 (官方帳號用)<span class="btn-note">複製後可將文字摘要貼上到其他APP</span></div>
     </button>
     
-    <!-- 拆分成兩張圖片下載按鈕 -->
     <button class="action-btn btn-img" onclick="generateImage('resultPart1')">
       <div>🖼️ 產生圖片 1：費用總表<span class="btn-note">包含額度判定、總自付金額</span></div>
     </button>
     <button class="action-btn btn-img" onclick="generateImage('resultPart2')">
-      <div>🖼️ 產生圖片 2：使用明細<span class="btn-note">包含各個項目的詳細列表</span></div>
+      <div>🖼️ 產生圖片 2：使用明細<span class="btn-note">包含詳細補助與自費清單</span></div>
     </button>
 
     <button class="action-btn btn-restart" onclick="restart()">🔄 重新開始</button>
@@ -476,7 +484,7 @@ button.action-btn {
 
 <!-- 🟣 Image Modal (手機圖片預覽) -->
 <div id="imageModal" class="image-modal">
-  <div class="modal-tip">📱 請長按圖片 → 加入照片</div>
+  <div id="modalTip" class="modal-tip"></div>
   <img id="modalImg" src="" alt="Result Image">
   <button class="modal-close-btn" onclick="closeModal()">關閉視窗</button>
 </div>
@@ -488,7 +496,7 @@ button.action-btn {
 </div>
 
 <script>
-/* ... (前段邏輯與 UI 控制維持不變) ... */
+/* ================= 邏輯與資料 ================= */
 const FLOW_NORMAL = ["step1", "step2-normal", "step2b-normal", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_FIRSTMONTH = ["step1", "step2-pre", "step2-post", "step3-gasc", "step4", "step5"];
 const FLOW_CAREGIVER_NOT_FIRSTMONTH = ["step1", "step2-post", "step3-gasc", "step4", "step5"];
@@ -603,7 +611,6 @@ function computeBC_Switch(cms,id,pre,post,preIn,day){
   const postF=Math.floor(raw*0.3*((30-day+1)/30));
   const totalF=preF+postF;
   
-  // 修正：計算 preUsed 和 preCopayVal (處理手動填寫金額的情況)
   let preUsed, preCopayVal;
   if (preIn > 0) {
       preUsed = preIn;
@@ -696,7 +703,6 @@ function computeBC_Switch(cms,id,pre,post,preIn,day){
 function computeGA_SC(u,cms,id,type){const lim=CMS_LIMIT[cms][type];const t=getTotal(u);const over=Math.max(0,t-lim);return{u,limit:lim,total:t,in:t-over,over,copay:getCopay(u,id),selfMoney:over}}
 
 let lastResult={}; let shareText="";
-function getDetailRow(code,qty,id){const p=SERVICE_ITEMS[code].price;const cUnit=SERVICE_ITEMS[code].copay[id];const t=p*qty;const c=Math.floor(qty*cUnit);return`<tr><td>${code}</td><td>$${p}</td><td>${qty}</td><td>$${t}</td><td>$${c}</td></tr>`}
 
 function computeAndShowResults() {
   const cms = Number(document.getElementById("cmsLevel").value);
@@ -734,9 +740,9 @@ function computeAndShowResults() {
   const totalPay = (bc.copay||0) + bcSelf + gaC + gaS + scC + scS;
 
   const idText = {normal:"一般", midlow:"中低", low:"低收"}[id];
-  shareText = `【長照試算結果】\nCMS等級：${cms}\n身分別：${idText}\n------------------\n💰 總應付金額：$${totalPay}\n(含部分負擔+超額自費)\n\n[B+C類] 部分負擔:$${bc.copay||0} / 自費:$${bcSelf}\n`;
-  if(rGA) shareText+=`[GA] 部分負擔:$${gaC} / 自費:$${gaS}\n`;
-  if(rSC) shareText+=`[SC] 部分負擔:$${scC} / 自費:$${scS}\n`;
+  shareText = `【長照試算結果】\nCMS等級：${cms}\n身分別：${idText}\n------------------\n💰 總應付金額：$${totalPay}\n(含部分負擔+超額自費)\n\n[B+C類] 部負:$${bc.copay||0} / 自費:$${bcSelf}\n`;
+  if(rGA) shareText+=`[GA] 部負:$${gaC} / 自費:$${gaS}\n`;
+  if(rSC) shareText+=`[SC] 部負:$${scC} / 自費:$${scS}\n`;
 
   // === 產生 HTML (分為兩部分) ===
   
@@ -756,20 +762,69 @@ function computeAndShowResults() {
 
   document.getElementById("resultPart1").innerHTML = h1;
 
-  // Part 2: 明細
-  let h2 = `<h4>④ 費用明細 (使用項目列表)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>數量</th><th>總價</th><th>部分負擔(估)</th></tr>`;
+  // Part 2: 詳細明細 (拆分 補助額度 與 自費項目)
   const fullBC = mergeUsage(reg, irreg, pre, post);
-  Object.keys(fullBC).forEach(k => { h2 += getDetailRow(k, fullBC[k], id); });
-  if (rGA) Object.keys(ga).forEach(k => { h2 += getDetailRow(k, ga[k], id); });
-  if (rSC) Object.keys(sc).forEach(k => { h2 += getDetailRow(k, sc[k], id); });
+  
+  // 1. 補助額度明細
+  let h2 = `<h4>④ 補助額度明細 (B+C/GA/SC)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>部負單價</th><th>數量</th><th>小計</th></tr>`;
+  
+  // 遍歷所有使用的 B+C 項目，扣除自費數量後，若大於0則顯示
+  Object.keys(fullBC).forEach(k => {
+    let totalQty = fullBC[k];
+    let selfQty = (bc.selfItems && bc.selfItems[k]) ? bc.selfItems[k] : 0;
+    let subsidyQty = totalQty - selfQty;
+    
+    if(subsidyQty > 0) {
+       const p = SERVICE_ITEMS[k].price;
+       const copayUnit = SERVICE_ITEMS[k].copay[id];
+       const subTotal = p * subsidyQty;
+       h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${subsidyQty}</td><td>${subTotal}</td></tr>`;
+    }
+  });
+  
+  // GA/SC 目前不支援細項拆分自費，若有使用量且系統無自費細項邏輯，暫視為全補助 (超額金額另計)
+  // 此處直接列出所有 GA/SC 項目
+  if (rGA) Object.keys(ga).forEach(k => { 
+      const p = SERVICE_ITEMS[k].price;
+      const copayUnit = SERVICE_ITEMS[k].copay[id];
+      h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${ga[k]}</td><td>${p*ga[k]}</td></tr>`; 
+  });
+  if (rSC) Object.keys(sc).forEach(k => { 
+      const p = SERVICE_ITEMS[k].price;
+      const copayUnit = SERVICE_ITEMS[k].copay[id];
+      h2 += `<tr><td>${k}</td><td>${p}</td><td>${copayUnit}</td><td>${sc[k]}</td><td>${p*sc[k]}</td></tr>`; 
+  });
+  
   h2 += `</table></div>`;
   
-  // 自費明細補充
+  // 2. 自費項目明細
+  h2 += `<h4>⑤ 自費項目明細 (超額部分)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>數量</th><th>小計</th></tr>`;
+  
+  let hasSelfItem = false;
   if (bcSelf > 0 && bc.selfItems) {
-      h2 += `<div class="table-wrapper"><table><tr><th class="title-cell" colspan="3">⚠️ B+C 自費項目 (已含在上方)</th></tr><tr><th>項目</th><th>自費數</th><th>金額</th></tr>`;
-      Object.keys(bc.selfItems).forEach(k => { h2 += `<tr><td>${k}</td><td>${bc.selfItems[k]}</td><td>${bc.selfItems[k]*SERVICE_ITEMS[k].price}</td></tr>`; });
-      h2 += `</table></div>`;
+      Object.keys(bc.selfItems).forEach(k => {
+          hasSelfItem = true;
+          const p = SERVICE_ITEMS[k].price;
+          const qty = bc.selfItems[k];
+          h2 += `<tr><td>${k}</td><td>${p}</td><td>${qty}</td><td>${p*qty}</td></tr>`;
+      });
   }
+  
+  // 若 GA/SC 有超額金額 (純金額)，加一列顯示
+  if (rGA && rGA.selfMoney > 0) {
+      hasSelfItem = true;
+      h2 += `<tr><td>GA超額</td><td>-</td><td>-</td><td>${rGA.selfMoney}</td></tr>`;
+  }
+  if (rSC && rSC.selfMoney > 0) {
+      hasSelfItem = true;
+      h2 += `<tr><td>SC超額</td><td>-</td><td>-</td><td>${rSC.selfMoney}</td></tr>`;
+  }
+  
+  if(!hasSelfItem) {
+      h2 += `<tr><td colspan="4" style="text-align:center; color:#888;">無自費項目</td></tr>`;
+  }
+  
+  h2 += `</table></div>`;
 
   document.getElementById("resultPart2").innerHTML = h2;
 }
@@ -796,6 +851,20 @@ function generateImage(elementId) {
     // 顯示 Modal
     const modal = document.getElementById("imageModal");
     const modalImg = document.getElementById("modalImg");
+    
+    // 偵測裝置類型以顯示不同提示
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const mobileTip = document.querySelector('.tip-mobile');
+    const desktopTip = document.querySelector('.tip-desktop');
+    
+    if (isTouchDevice) {
+        mobileTip.style.display = 'block';
+        desktopTip.style.display = 'none';
+    } else {
+        mobileTip.style.display = 'none';
+        desktopTip.style.display = 'block';
+    }
+    
     modalImg.src = imgData;
     modal.classList.add("show");
     
@@ -830,4 +899,3 @@ function copyToClipboard() {
 </script>
 </body>
 </html>
-
