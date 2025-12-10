@@ -734,9 +734,9 @@ function computeAndShowResults() {
   const totalPay = (bc.copay||0) + bcSelf + gaC + gaS + scC + scS;
 
   const idText = {normal:"一般", midlow:"中低", low:"低收"}[id];
-  shareText = `【長照試算結果】\nCMS等級：${cms}\n身分別：${idText}\n------------------\n💰 總應付金額：$${totalPay}\n(含部分負擔+超額自費)\n\n[B+C類] 部負:$${bc.copay||0} / 自費:$${bcSelf}\n`;
-  if(rGA) shareText+=`[GA] 部負:$${gaC} / 自費:$${gaS}\n`;
-  if(rSC) shareText+=`[SC] 部負:$${scC} / 自費:$${scS}\n`;
+  shareText = `【長照試算結果】\nCMS等級：${cms}\n身分別：${idText}\n------------------\n💰 總應付金額：$${totalPay}\n(含部分負擔+超額自費)\n\n[B+C類] 部分負擔:$${bc.copay||0} / 自費:$${bcSelf}\n`;
+  if(rGA) shareText+=`[GA] 部分負擔:$${gaC} / 自費:$${gaS}\n`;
+  if(rSC) shareText+=`[SC] 部分負擔:$${scC} / 自費:$${scS}\n`;
 
   // === 產生 HTML (分為兩部分) ===
   
@@ -757,7 +757,7 @@ function computeAndShowResults() {
   document.getElementById("resultPart1").innerHTML = h1;
 
   // Part 2: 明細
-  let h2 = `<h4>④ 費用明細 (使用項目列表)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>數量</th><th>總價</th><th>部負(估)</th></tr>`;
+  let h2 = `<h4>④ 費用明細 (使用項目列表)</h4><div class="table-wrapper"><table><tr><th>項目</th><th>單價</th><th>數量</th><th>總價</th><th>部分負擔(估)</th></tr>`;
   const fullBC = mergeUsage(reg, irreg, pre, post);
   Object.keys(fullBC).forEach(k => { h2 += getDetailRow(k, fullBC[k], id); });
   if (rGA) Object.keys(ga).forEach(k => { h2 += getDetailRow(k, ga[k], id); });
@@ -830,3 +830,4 @@ function copyToClipboard() {
 </script>
 </body>
 </html>
+
